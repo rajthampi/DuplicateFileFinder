@@ -13,7 +13,7 @@
         <MicaBackdrop />
     </Window.SystemBackdrop>
 
-    <Grid x:Name="RootGrid" RowSpacing="0">
+    <Grid x:Name="RootGrid" RequestedTheme="Dark" Background="{StaticResource MetalWindowBrush}" RowSpacing="0">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -70,68 +70,62 @@
                 x:Name="DuplicateList"
                 Grid.Row="2"
                 ItemsSource="{x:Bind DuplicateFiles}"
+                FontFamily="{ThemeResource ContentControlThemeFontFamily}"
+                FontSize="14"
                 ScrollViewer.HorizontalScrollBarVisibility="Visible"
                 ScrollViewer.VerticalScrollBarVisibility="Visible">
                 <ListView.Header>
-                    <Grid x:Name="ResultsHeader" Padding="12,8" Background="{ThemeResource SubtleFillColorSecondaryBrush}">
+                    <Grid x:Name="ResultsHeader" Padding="12,8" Background="{StaticResource MetalHeaderBrush}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="{Binding DataContext.SourceFileColumnWidth, ElementName=RootGrid}" />
                             <ColumnDefinition Width="{Binding DataContext.SourceSizeColumnWidth, ElementName=RootGrid}" />
-                            <ColumnDefinition Width="{Binding DataContext.SourceHashColumnWidth, ElementName=RootGrid}" />
                             <ColumnDefinition Width="{Binding DataContext.DuplicateFileColumnWidth, ElementName=RootGrid}" />
                             <ColumnDefinition Width="{Binding DataContext.DuplicateSizeColumnWidth, ElementName=RootGrid}" />
-                            <ColumnDefinition Width="{Binding DataContext.DuplicateHashColumnWidth, ElementName=RootGrid}" />
                             <ColumnDefinition Width="{Binding DataContext.DeleteColumnWidth, ElementName=RootGrid}" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="Source file" FontWeight="SemiBold" />
-                        <TextBlock Text="Source size" Grid.Column="1" FontWeight="SemiBold" />
-                        <TextBlock Text="Source SHA-256" Grid.Column="2" FontWeight="SemiBold" />
-                        <TextBlock Text="Duplicate file" Grid.Column="3" FontWeight="SemiBold" />
-                        <TextBlock Text="Duplicate size" Grid.Column="4" FontWeight="SemiBold" />
-                        <TextBlock Text="Duplicate SHA-256" Grid.Column="5" FontWeight="SemiBold" />
-                        <TextBlock Text="Delete" Grid.Column="6" FontWeight="SemiBold" />
+                        <TextBlock Text="Source file" FontSize="14" FontWeight="SemiBold" />
+                        <TextBlock Text="Source size" Grid.Column="1" FontSize="14" FontWeight="SemiBold" />
+                        <TextBlock Text="Duplicate file" Grid.Column="2" FontSize="14" FontWeight="SemiBold" />
+                        <TextBlock Text="Duplicate size" Grid.Column="3" FontSize="14" FontWeight="SemiBold" />
+                        <TextBlock Text="Delete" Grid.Column="4" FontSize="14" FontWeight="SemiBold" />
                         <Thumb Grid.Column="0" Tag="SourceFile" HorizontalAlignment="Right" Width="6" DragDelta="ColumnResize_DragDelta" />
                         <Thumb Grid.Column="1" Tag="SourceSize" HorizontalAlignment="Right" Width="6" DragDelta="ColumnResize_DragDelta" />
-                        <Thumb Grid.Column="2" Tag="SourceHash" HorizontalAlignment="Right" Width="6" DragDelta="ColumnResize_DragDelta" />
-                        <Thumb Grid.Column="3" Tag="DuplicateFile" HorizontalAlignment="Right" Width="6" DragDelta="ColumnResize_DragDelta" />
-                        <Thumb Grid.Column="4" Tag="DuplicateSize" HorizontalAlignment="Right" Width="6" DragDelta="ColumnResize_DragDelta" />
-                        <Thumb Grid.Column="5" Tag="DuplicateHash" HorizontalAlignment="Right" Width="6" DragDelta="ColumnResize_DragDelta" />
+                        <Thumb Grid.Column="2" Tag="DuplicateFile" HorizontalAlignment="Right" Width="6" DragDelta="ColumnResize_DragDelta" />
+                        <Thumb Grid.Column="3" Tag="DuplicateSize" HorizontalAlignment="Right" Width="6" DragDelta="ColumnResize_DragDelta" />
                     </Grid>
                 </ListView.Header>
                 <ListView.ItemTemplate>
                     <DataTemplate x:DataType="local:DuplicateFilePair">
-                        <Grid Padding="12,8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="{Binding DataContext.SourceFileColumnWidth, ElementName=RootGrid}" />
-                                <ColumnDefinition Width="{Binding DataContext.SourceSizeColumnWidth, ElementName=RootGrid}" />
-                                <ColumnDefinition Width="{Binding DataContext.SourceHashColumnWidth, ElementName=RootGrid}" />
-                                <ColumnDefinition Width="{Binding DataContext.DuplicateFileColumnWidth, ElementName=RootGrid}" />
-                                <ColumnDefinition Width="{Binding DataContext.DuplicateSizeColumnWidth, ElementName=RootGrid}" />
-                                <ColumnDefinition Width="{Binding DataContext.DuplicateHashColumnWidth, ElementName=RootGrid}" />
-                                <ColumnDefinition Width="{Binding DataContext.DeleteColumnWidth, ElementName=RootGrid}" />
-                            </Grid.ColumnDefinitions>
-                            <Grid Grid.Column="0" ColumnSpacing="8">
+                        <Border BorderBrush="{StaticResource MetalBorderBrush}" BorderThickness="0,1,0,1" MinHeight="80" VerticalAlignment="Top">
+                            <Grid Padding="12,8">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="48" />
+                                    <ColumnDefinition Width="{Binding DataContext.SourceFileColumnWidth, ElementName=RootGrid}" />
+                                    <ColumnDefinition Width="{Binding DataContext.SourceSizeColumnWidth, ElementName=RootGrid}" />
+                                    <ColumnDefinition Width="{Binding DataContext.DuplicateFileColumnWidth, ElementName=RootGrid}" />
+                                    <ColumnDefinition Width="{Binding DataContext.DuplicateSizeColumnWidth, ElementName=RootGrid}" />
+                                    <ColumnDefinition Width="{Binding DataContext.DeleteColumnWidth, ElementName=RootGrid}" />
+                                </Grid.ColumnDefinitions>
+                            <Grid Grid.Column="0" ColumnSpacing="8" VerticalAlignment="Top">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="64" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <Image Source="{x:Bind SourceThumbnail}" Width="48" Height="48" Stretch="UniformToFill" />
-                                <TextBlock Text="{x:Bind SourcePath}" Grid.Column="1" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                <Image Source="{x:Bind SourceThumbnail}" Tag="{x:Bind SourcePath}" Width="64" Height="64" Stretch="UniformToFill" VerticalAlignment="Top" Tapped="FileThumbnail_Tapped" ToolTipService.ToolTip="Open source file location" />
+                                <TextBlock Text="{x:Bind SourcePath}" Grid.Column="1" VerticalAlignment="Top" TextTrimming="CharacterEllipsis" />
                             </Grid>
-                            <TextBlock Text="{x:Bind SourceSizeText}" Grid.Column="1" />
-                            <TextBlock Text="{x:Bind SourceHash}" Grid.Column="2" TextTrimming="CharacterEllipsis" />
-                            <Grid Grid.Column="3" ColumnSpacing="8">
+                            <TextBlock Text="{x:Bind SourceSizeText}" Grid.Column="1" VerticalAlignment="Top" />
+                            <Grid Grid.Column="2" ColumnSpacing="8" VerticalAlignment="Top">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="48" />
+                                    <ColumnDefinition Width="64" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <Image Source="{x:Bind DuplicateThumbnail}" Width="48" Height="48" Stretch="UniformToFill" />
-                                <TextBlock Text="{x:Bind DuplicatePath}" Grid.Column="1" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                <Image Source="{x:Bind DuplicateThumbnail}" Tag="{x:Bind DuplicatePath}" Width="64" Height="64" Stretch="UniformToFill" VerticalAlignment="Top" Tapped="FileThumbnail_Tapped" ToolTipService.ToolTip="Open duplicate file location" />
+                                <TextBlock Text="{x:Bind DuplicatePath}" Grid.Column="1" VerticalAlignment="Top" TextTrimming="CharacterEllipsis" />
                             </Grid>
-                            <TextBlock Text="{x:Bind DuplicateSizeText}" Grid.Column="4" />
-                            <TextBlock Text="{x:Bind DuplicateHash}" Grid.Column="5" TextTrimming="CharacterEllipsis" />
-                            <CheckBox Grid.Column="6" IsChecked="{x:Bind IsSelected, Mode=TwoWay}" HorizontalAlignment="Center" Checked="FileSelection_Changed" Unchecked="FileSelection_Changed" />
-                        </Grid>
+                            <TextBlock Text="{x:Bind DuplicateSizeText}" Grid.Column="3" VerticalAlignment="Top" />
+                                <CheckBox Grid.Column="4" IsChecked="{x:Bind IsSelected, Mode=TwoWay}" HorizontalAlignment="Center" VerticalAlignment="Top" Checked="FileSelection_Changed" Unchecked="FileSelection_Changed" />
+                            </Grid>
+                        </Border>
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>
@@ -150,8 +144,8 @@
         Grid.Row="2"
         MinHeight="36"
         Padding="12,6"
-        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        Background="{StaticResource MetalSurfaceBrush}"
+        BorderBrush="{StaticResource MetalBorderBrush}"
         BorderThickness="0,1,0,0">
         <Grid ColumnSpacing="16">
             <Grid.ColumnDefinitions>

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -45,6 +46,22 @@ namespace DuplicateFileFinder
             InitializeComponent();
             RootGrid.DataContext = this;
             _selectAllCheckBox = (Content as FrameworkElement)?.FindName("SelectAllCheckBox") as CheckBox;
+        }
+
+        private void FileThumbnail_Tapped(object sender, TappedRoutedEventArgs e)
+        {
+            if (sender is not Image image || image.Tag is not string path || !File.Exists(path))
+            {
+                return;
+            }
+
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "explorer.exe",
+                Arguments = $"/select,\"{path}\"",
+                UseShellExecute = true
+            });
+            e.Handled = true;
         }
 
         private void ColumnResize_DragDelta(object sender, DragDeltaEventArgs e)
@@ -257,7 +274,7 @@ namespace DuplicateFileFinder
             return Convert.ToHexString(SHA256.HashData(stream));
         }
 
-        private void Delete_Click(object sender, RoutedEventArgs e)
+        private async void Delete_Click(object sender, RoutedEventArgs e)
         {
             var selected = DuplicateFiles
                 .Where(file => file.IsSelected)
@@ -268,8 +285,16 @@ namespace DuplicateFileFinder
                 return;
             }
 
-            foreach (var item in selected)
+            var moveToRecycleBin = RecycleBinCheckBox.IsChecked == true;
+            var deletedCount = 0;
+            StatusBarText.Text = "Deleting selected files...";
+            ScanProgressBar.Value = 0;
+            ScanPercentageText.Text = "0%";
+            await Task.Yield();
+
+            for (var index = 0; index < selected.Count; index++)
             {
+                var item = selected[index];
                 if (!item.IsSelected)
                 {
                     continue;
@@ -277,15 +302,13 @@ namespace DuplicateFileFinder
 
                 try
                 {
-                    if (RecycleBinCheckBox.IsChecked == true)
-                    {
-                        MoveToRecycleBin(item.DuplicatePath);
-                    }
-                    else
-                    {
-                        File.Delete(item.DuplicatePath);
-                    }
+                    StatusBarText.Text = $"Deleting file {index + 1:N0} of {selected.Count:N0}...";
+                    await Task.Run(() => DeleteDuplicateFile(item, moveToRecycleBin));
                     DuplicateFiles.Remove(item);
+                    deletedCount++;
+                    var percentage = (index + 1) * 100 / selected.Count;
+                    ScanProgressBar.Value = percentage;
+                    ScanPercentageText.Text = $"{percentage}%";
                 }
                 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
                 {
@@ -295,7 +318,28 @@ namespace DuplicateFileFinder
 
             DeleteButton.IsEnabled = false;
             UpdateSelectionControls();
-            StatusText.Text = "Selected files deleted.";
+            ScanProgressBar.Value = 100;
+            ScanPercentageText.Text = "100%";
+            StatusBarText.Text = "Delete complete";
+            StatusText.Text = $"Deleted {deletedCount:N0} duplicate file{(deletedCount == 1 ? "" : "s")}.";
+        }
+
+        private void DeleteDuplicateFile(DuplicateFilePair item, bool moveToRecycleBin)
+        {
+            var duplicatePath = item.DuplicatePath;
+            if (string.Equals(duplicatePath, item.SourcePath, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new IOException("The duplicate path matches the source path and was not deleted.");
+            }
+
+            if (moveToRecycleBin)
+            {
+                MoveToRecycleBin(duplicatePath);
+            }
+            else
+            {
+                File.Delete(duplicatePath);
+            }
         }
 
         private void Delete_AcceleratorInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)

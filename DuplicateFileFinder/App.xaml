@@ -8,9 +8,40 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
-                <!-- Other merged dictionaries here -->
             </ResourceDictionary.MergedDictionaries>
-            <!-- Other app resources here -->
+
+            <LinearGradientBrush x:Key="MetalWindowBrush" StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Color="#FF303940" Offset="0" />
+                <GradientStop Color="#FF171D22" Offset="0.55" />
+                <GradientStop Color="#FF252D33" Offset="1" />
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="MetalSurfaceBrush" StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Color="#FF3B464E" Offset="0" />
+                <GradientStop Color="#FF293239" Offset="1" />
+            </LinearGradientBrush>
+
+            <SolidColorBrush x:Key="MetalHeaderBrush" Color="#FF46535D" />
+            <SolidColorBrush x:Key="MetalBorderBrush" Color="#FF71808A" />
+            <SolidColorBrush x:Key="MetalAccentBrush" Color="#FF76B5D8" />
+            <SolidColorBrush x:Key="MetalTextBrush" Color="#FFF1F4F5" />
+            <SolidColorBrush x:Key="MetalMutedTextBrush" Color="#FFB8C2C8" />
+
+            <Style TargetType="Button">
+                <Setter Property="Background" Value="{StaticResource MetalSurfaceBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource MetalBorderBrush}" />
+                <Setter Property="Foreground" Value="{StaticResource MetalTextBrush}" />
+            </Style>
+
+            <Style TargetType="TextBox">
+                <Setter Property="Background" Value="#FF252D33" />
+                <Setter Property="BorderBrush" Value="{StaticResource MetalBorderBrush}" />
+                <Setter Property="Foreground" Value="{StaticResource MetalTextBrush}" />
+            </Style>
+
+            <Style TargetType="CheckBox">
+                <Setter Property="Foreground" Value="{StaticResource MetalTextBrush}" />
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
