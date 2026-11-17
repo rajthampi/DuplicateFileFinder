@@ -34,8 +34,8 @@
       Executable="$targetnametoken$.exe"
       EntryPoint="$targetentrypoint$">
       <uap:VisualElements
-        DisplayName="DuplicateFileFinder (Package)"
-        Description="DuplicateFileFinder (Package)"
+        DisplayName="DuplicateFileFinder"
+        Description="WinUI3 AI Generate Application for learning. This application finds duplicates for chosen or all file types, lists in a view, allows the user to select all or individual files for duplicate deletion. Enhanced with recyclebin for easy recovery."
         BackgroundColor="transparent"
         Square150x150Logo="Images\Square150x150Logo.png"
         Square44x44Logo="Images\Square44x44Logo.png">

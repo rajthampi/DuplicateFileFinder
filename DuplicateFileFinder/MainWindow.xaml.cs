@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -15,6 +16,7 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Storage;
+using Windows.Storage.FileProperties;
 using Windows.Storage.Pickers;
 using WinRT.Interop;
 
@@ -38,14 +40,45 @@ namespace DuplicateFileFinder
         public GridLength DeleteColumnWidth { get; private set; } = new(90);
         private bool _updatingSelection;
         private CheckBox? _selectAllCheckBox;
+        private readonly SemaphoreSlim _thumbnailSemaphore = new(4);
 
         public event PropertyChangedEventHandler? PropertyChanged;
+
+        //public MainWindow()
+        //{
+        //    InitializeComponent();
+        //    RootGrid.DataContext = this;
+        //    _selectAllCheckBox = (Content as FrameworkElement)?.FindName("SelectAllCheckBox") as CheckBox;
+        //}
 
         public MainWindow()
         {
             InitializeComponent();
+
+            var iconPath = Path.Combine(AppContext.BaseDirectory, "Gemini_256.ico");
+            if (File.Exists(iconPath))
+            {
+                AppWindow.SetIcon(iconPath);
+            }
+
             RootGrid.DataContext = this;
             _selectAllCheckBox = (Content as FrameworkElement)?.FindName("SelectAllCheckBox") as CheckBox;
+        }
+
+        private async Task LoadThumbnailsAsync(IEnumerable<DuplicateFilePair> files)
+        {
+            await Task.WhenAll(files.Select(async file =>
+            {
+                await _thumbnailSemaphore.WaitAsync();
+                try
+                {
+                    await file.LoadThumbnailsAsync();
+                }
+                finally
+                {
+                    _thumbnailSemaphore.Release();
+                }
+            }));
         }
 
         private void FileThumbnail_Tapped(object sender, TappedRoutedEventArgs e)
@@ -57,8 +90,7 @@ namespace DuplicateFileFinder
 
             Process.Start(new ProcessStartInfo
             {
-                FileName = "explorer.exe",
-                Arguments = $"/select,\"{path}\"",
+                FileName = path,
                 UseShellExecute = true
             });
             e.Handled = true;
@@ -148,13 +180,16 @@ namespace DuplicateFileFinder
                 var files = await Task.Run(() => FindDuplicatesAsync(folder, patterns, progress));
                 DuplicateList.ItemsSource = null;
                 DuplicateFiles.Clear();
-                foreach (var file in files)
+                DuplicateList.ItemsSource = DuplicateFiles;
+
+                for (var index = 0; index < files.Count; index++)
                 {
+                    var file = files[index];
                     file.PropertyChanged += DuplicateFile_PropertyChanged;
                     DuplicateFiles.Add(file);
+                    StatusBarText.Text = $"Loading thumbnails {index + 1:N0} of {files.Count:N0}...";
+                    await file.LoadThumbnailsAsync();
                 }
-                DuplicateList.ItemsSource = DuplicateFiles;
-                _ = Task.WhenAll(files.Select(file => file.LoadThumbnailsAsync()));
                 UpdateSelectionControls();
                 var totalSize = files.Sum(file => file.DuplicateSize);
                 DuplicateCountText.Text = $"Files: {files.Count:N0}";
@@ -496,24 +531,66 @@ namespace DuplicateFileFinder
 
         private static async Task<ImageSource?> LoadThumbnailAsync(string path)
         {
-            var extension = Path.GetExtension(path).ToLowerInvariant();
-            if (extension is not ".bmp" and not ".gif" and not ".jpeg" and not ".jpg" and not ".png" and not ".tif" and not ".tiff" and not ".webp")
+            StorageFile file;
+            try
+            {
+                file = await StorageFile.GetFileFromPathAsync(path);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or COMException)
             {
                 return null;
             }
 
             try
             {
-                var file = await StorageFile.GetFileFromPathAsync(path);
-                using var stream = await file.OpenReadAsync();
-                var bitmap = new BitmapImage();
-                await bitmap.SetSourceAsync(stream);
-                return bitmap;
+                using var thumbnail = await file.GetThumbnailAsync(
+                    ThumbnailMode.ListView,
+                    64,
+                    ThumbnailOptions.ResizeThumbnail);
+                if (thumbnail != null)
+                {
+                    var bitmap = new BitmapImage();
+                    await bitmap.SetSourceAsync(thumbnail);
+                    return bitmap;
+                }
             }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or COMException)
             {
-                return null;
             }
+
+            try
+            {
+                using var thumbnail = await file.GetThumbnailAsync(
+                    ThumbnailMode.SingleItem,
+                    64,
+                    ThumbnailOptions.ResizeThumbnail);
+                if (thumbnail != null)
+                {
+                    var bitmap = new BitmapImage();
+                    await bitmap.SetSourceAsync(thumbnail);
+                    return bitmap;
+                }
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or COMException)
+            {
+            }
+
+            var extension = Path.GetExtension(path).ToLowerInvariant();
+            if (extension is ".bmp" or ".gif" or ".jpeg" or ".jpg" or ".png" or ".tif" or ".tiff" or ".webp")
+            {
+                try
+                {
+                    using var stream = await file.OpenReadAsync();
+                    var bitmap = new BitmapImage { DecodePixelWidth = 64 };
+                    await bitmap.SetSourceAsync(stream);
+                    return bitmap;
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or COMException)
+                {
+                }
+            }
+
+            return null;
         }
 
         private void OnPropertyChanged(string propertyName)
