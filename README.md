@@ -1,5 +1,3 @@
-Here's an improved version of the README.md file, incorporating the new content while maintaining the existing structure and information:
-
 # Duplicate File Finder
 
 A Windows desktop application built with WinUI 3 and .NET 8 for locating and safely removing duplicate files.
